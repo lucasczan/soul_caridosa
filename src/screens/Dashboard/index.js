@@ -13,11 +13,13 @@ import Logo from '../../img/logo.png';
 import Button from '../../components/Button';
 import {Icon} from 'react-native-elements';
 
-const Dashboard = ({navigation}) => {
+const Dashboard = () => {
   const {SignOut} = useContext(AuthContext);
   const [visible, setVisible] = useState(false);
+  const [visibleLocalization, setVisibleLocalization] = useState(false);
   const [activeCoordinates, setActiveCoordinates] = useState({});
   const [initialregion, setInitialRegion] = useState({});
+  const [markerActive, setMarkerActive] = useState({});
 
   const [markers, setMarkers] = useState([
     {
@@ -35,18 +37,17 @@ const Dashboard = ({navigation}) => {
     {
       latitude: -23.55815716044587,
       longitude: -46.63223750889301,
-      quantity: 20,
-      color: avatarY,
+      quantity: 21,
+      color: avatarR,
     },
   ]);
 
   const toggleOverlay = (coordinates) => {
-    console.log(coordinates);
     setActiveCoordinates(coordinates);
     setVisible(!visible);
   };
 
-  const addMark = (quantity, color) => {
+  const adc_localizacao = (quantity, color) => {
     const coordinates = activeCoordinates.coordinate;
     coordinates.quantity = quantity;
     coordinates.color = color;
@@ -54,8 +55,12 @@ const Dashboard = ({navigation}) => {
     setVisible(!visible);
   };
 
+  const remover_localizacao = (marker) => {
+    setMarkers(markers.filter((item) => item !== marker));
+    setVisibleLocalization(!visibleLocalization);
+  };
+
   const handleGetDirections = (marker) => {
-    console.log('marker', marker);
     const data = {
       source: {
         latitude: initialregion.latitude,
@@ -80,6 +85,10 @@ const Dashboard = ({navigation}) => {
     getDirections(data);
   };
 
+  const toggleOverlayLocalization = () => {
+    setVisibleLocalization(!visibleLocalization);
+  };
+
   useEffect(() => {
     Geolocation.getCurrentPosition((position) => {
       setInitialRegion({
@@ -88,6 +97,7 @@ const Dashboard = ({navigation}) => {
       });
     });
   }, []);
+
   return (
     <>
       <View style={{flex: 1}}>
@@ -142,6 +152,39 @@ const Dashboard = ({navigation}) => {
               Selecione um ponto do mapa para adicionar informações ou selecione
               um ponto indicado para traçar a rota.
             </Text>
+            <Text
+              style={{
+                color: 'green',
+                position: 'absolute',
+                top: 60,
+                left: 90,
+                right: 20,
+                fontWeight: 'bold',
+              }}>
+              1-5
+            </Text>
+            <Text
+              style={{
+                color: '#F3D343',
+                position: 'absolute',
+                top: 60,
+                left: 200,
+                right: 20,
+                fontWeight: 'bold',
+              }}>
+              5-20
+            </Text>
+            <Text
+              style={{
+                color: 'red',
+                position: 'absolute',
+                top: 60,
+                left: 310,
+                right: 20,
+                fontWeight: 'bold',
+              }}>
+              20+
+            </Text>
           </View>
         </View>
         <Overlay isVisible={visible} onBackdropPress={toggleOverlay}>
@@ -160,7 +203,9 @@ const Dashboard = ({navigation}) => {
                   style={{width: 50, height: 130, marginTop: 16}}
                   source={avatarG}
                 />
-                <AddHomeless border="green" onPress={() => addMark(5, avatarG)}>
+                <AddHomeless
+                  border="green"
+                  onPress={() => adc_localizacao(5, avatarG)}>
                   <Text style={{color: 'green'}}>1-5</Text>
                 </AddHomeless>
               </View>
@@ -171,7 +216,7 @@ const Dashboard = ({navigation}) => {
                 />
                 <AddHomeless
                   border="#F3D343"
-                  onPress={() => addMark(20, avatarY)}>
+                  onPress={() => adc_localizacao(20, avatarY)}>
                   <Text style={{color: '#E0C133'}}>5-20</Text>
                 </AddHomeless>
               </View>
@@ -180,10 +225,40 @@ const Dashboard = ({navigation}) => {
                   style={{width: 50, height: 130, marginTop: 16}}
                   source={avatarR}
                 />
-                <AddHomeless border="red" onPress={() => addMark(20, avatarR)}>
+                <AddHomeless
+                  border="red"
+                  onPress={() => adc_localizacao(20, avatarR)}>
                   <Text style={{color: 'red'}}>20+</Text>
                 </AddHomeless>
               </View>
+            </View>
+          </View>
+        </Overlay>
+        <Overlay
+          isVisible={visibleLocalization}
+          onBackdropPress={toggleOverlayLocalization}>
+          <View style={{flexDirection: 'row', padding: 20}}>
+            <View style={{alignItems: 'center', width: 100}}>
+              <Icon
+                onPress={() => handleGetDirections(markerActive)}
+                reverse
+                name="locate-sharp"
+                type="ionicon"
+                color="#517fa4"
+              />
+              <Text style={{textAlign: 'center'}}>
+                Traçar rota até a localização
+              </Text>
+            </View>
+            <View style={{alignItems: 'center', marginLeft: 50, width: 100}}>
+              <Icon
+                onPress={() => remover_localizacao(markerActive)}
+                reverse
+                name="trash-sharp"
+                type="ionicon"
+                color="#517fa4"
+              />
+              <Text style={{textAlign: 'center'}}>Excluir localização</Text>
             </View>
           </View>
         </Overlay>
@@ -198,7 +273,10 @@ const Dashboard = ({navigation}) => {
           onPress={(e) => toggleOverlay(e.nativeEvent)}>
           {markers.map((marker, i) => (
             <Marker
-              onPress={() => handleGetDirections(marker)}
+              onPress={() => {
+                toggleOverlayLocalization();
+                setMarkerActive(marker);
+              }}
               key={i}
               coordinate={{
                 latitude: marker.latitude,
